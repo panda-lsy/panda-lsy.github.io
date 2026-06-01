@@ -27,7 +27,10 @@ export async function renderAuthCallback(app, _, params) {
       body: JSON.stringify({ code }),
     });
 
-    if (!res.ok) throw new Error('Token exchange failed');
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.error || `Token exchange failed (${res.status})`);
+    }
 
     const data = await res.json();
     const token = data.access_token;

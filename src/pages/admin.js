@@ -34,7 +34,7 @@ function renderLogin(app) {
         <div style="text-align:center;color:var(--color-text-muted);font-size:var(--font-size-xs);margin-bottom:var(--space-4)">or use a Personal Access Token</div>` : ''}
         <form class="admin-login__form">
           <input type="password" class="input" placeholder="GitHub Personal Access Token" id="pat-input" autocomplete="off" />
-          <button type="submit" class="btn${oauthUrl ? ' btn--sm' : ' btn--primary'}">Login with PAT</button>
+          <button type="submit" class="btn${oauthUrl ? ' btn--sm' : ' btn--primary'}">login with PAT</button>
         </form>
       </div>
     </div>

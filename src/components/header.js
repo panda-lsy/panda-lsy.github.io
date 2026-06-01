@@ -27,7 +27,7 @@ export function renderHeader(mount) {
          <span class="site-header__username">${user.login}</span>
        </a>`
     : (OAUTH_CLIENT_ID
-      ? `<a class="site-header__login-btn" href="${getOAuthUrl()}" title="Login with GitHub">Login</a>`
+      ? `<a class="site-header__login-btn" href="${getOAuthUrl()}" title="Login with GitHub">login</a>`
       : '');
 
   headerEl.innerHTML = `
