@@ -141,6 +141,25 @@ export async function verifyPat(pat) {
   return res.json();
 }
 
+export async function checkAdminAccess(pat) {
+  const user = await verifyPat(pat);
+  if (!user) return null;
+
+  // Repo owner always has access
+  if (user.login === REPO_OWNER) return user;
+
+  // Check if user is a collaborator
+  try {
+    const res = await fetch(
+      `${BASE_URL}/repos/${REPO_OWNER}/${REPO_NAME}/collaborators/${user.login}`,
+      { headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    if (res.status === 204) return user;
+  } catch {}
+
+  return null; // Not authorized
+}
+
 export async function fetchAllPosts() {
   const key = cacheKey(['all-posts']);
   const cached = getCached(key);

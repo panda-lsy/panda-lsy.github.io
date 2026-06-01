@@ -1,5 +1,5 @@
 import { get, set, remove } from '../utils/storage.js';
-import { verifyPat, fetchAllPosts, createPost, updatePost, closePost, reopenPost, fetchConfig, saveConfig } from '../api/github.js';
+import { checkAdminAccess, fetchAllPosts, createPost, updatePost, closePost, reopenPost, fetchConfig, saveConfig } from '../api/github.js';
 import { showToast } from '../components/toast.js';
 import { createPostEditor } from '../components/post-editor.js';
 import { refreshMusicPlayer } from '../components/music-player.js';
@@ -10,12 +10,16 @@ export async function renderAdmin(app) {
   const pat = get('gh_pat');
 
   if (pat) {
-    const user = await verifyPat(pat);
+    const user = await checkAdminAccess(pat);
     if (user) {
       renderDashboard(app, user);
       return;
     }
-    remove('gh_pat');
+    // Logged in but not authorized
+    if (get('gh_user')) {
+      renderUnauthorized(app);
+      return;
+    }
   }
 
   renderLogin(app);
@@ -52,10 +56,10 @@ function renderLogin(app) {
     btn.disabled = true;
 
     try {
-      const user = await verifyPat(token);
+      const user = await checkAdminAccess(token);
       if (!user) {
-        showToast('Invalid token', 'error');
-        btn.textContent = 'Login';
+        showToast('Not authorized. Only repo owner/collaborators can access admin.', 'error');
+        btn.textContent = 'login with PAT';
         btn.disabled = false;
         return;
       }
@@ -70,6 +74,27 @@ function renderLogin(app) {
       btn.textContent = 'Login';
       btn.disabled = false;
     }
+  });
+}
+
+function renderUnauthorized(app) {
+  const user = get('gh_user');
+  app.innerHTML = `
+    <div class="page">
+      <div class="admin-login">
+        <h1 class="admin-login__title">Access Denied</h1>
+        <p style="color:var(--color-text-secondary);margin-bottom:var(--space-6)">
+          ${user ? `Logged in as <strong>${user.login}</strong>. ` : ''}
+          Only the repository owner or collaborators can access the admin dashboard.
+        </p>
+        <button class="btn" id="unauthorized-logout">Logout</button>
+      </div>
+    </div>
+  `;
+  app.querySelector('#unauthorized-logout').addEventListener('click', () => {
+    clearUser();
+    renderHeader(document.getElementById('header-mount'));
+    renderLogin(app);
   });
 }
 
