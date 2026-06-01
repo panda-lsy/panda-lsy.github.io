@@ -2,7 +2,7 @@ import { OAUTH_PROXY_URL } from '../api/config.js';
 import { verifyPat } from '../api/github.js';
 import { set } from '../utils/storage.js';
 import { showToast } from '../components/toast.js';
-import { setCachedUser, renderHeader } from '../components/header.js';
+import { setCachedUser, renderHeader, syncGiscusToken } from '../components/header.js';
 import { navigate } from '../router.js';
 
 export async function renderAuthCallback(app, _, params) {
@@ -47,8 +47,11 @@ export async function renderAuthCallback(app, _, params) {
     const headerMount = document.getElementById('header-mount');
     renderHeader(headerMount);
 
+    // Sync token to Giscus so user can comment without re-login
+    syncGiscusToken();
+
     showToast(`Welcome, ${user.login}!`);
-    navigate('/admin');
+    navigate('/user');
   } catch (err) {
     console.error('OAuth callback error:', err);
     showToast('Authentication failed: ' + err.message, 'error');

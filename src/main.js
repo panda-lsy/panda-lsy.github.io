@@ -9,6 +9,8 @@ import './styles/home.css';
 import './styles/posts.css';
 import './styles/admin.css';
 import './styles/music-player.css';
+import './styles/login.css';
+import './styles/user.css';
 
 import { addRoute, initRouter } from './router.js';
 import { renderHeader } from './components/header.js';
@@ -18,6 +20,8 @@ import { renderPosts } from './pages/posts.js';
 import { renderPostDetail } from './pages/post-detail.js';
 import { renderAdmin } from './pages/admin.js';
 import { renderAuthCallback } from './pages/auth-callback.js';
+import { renderLogin } from './pages/login.js';
+import { renderUser } from './pages/user.js';
 import { initMusicPlayer } from './components/music-player.js';
 
 addRoute(/^\/$/, renderHome);
@@ -25,6 +29,8 @@ addRoute(/^\/posts$/, renderPosts);
 addRoute(/^\/posts\/(?<id>\d+)$/, renderPostDetail);
 addRoute(/^\/admin$/, renderAdmin);
 addRoute(/^\/auth\/callback$/, renderAuthCallback);
+addRoute(/^\/login$/, renderLogin);
+addRoute(/^\/user$/, renderUser);
 
 function bootstrap() {
   // GitHub OAuth redirects with ?code=xxx at the domain root

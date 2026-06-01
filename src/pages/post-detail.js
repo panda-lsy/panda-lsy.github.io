@@ -1,6 +1,7 @@
 import { fetchPost } from '../api/github.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import { GISCUS_REPO, GISCUS_REPO_ID, GISCUS_CATEGORY, GISCUS_CATEGORY_ID } from '../api/config.js';
+import { syncGiscusToken } from '../components/header.js';
 
 export async function renderPostDetail(app, { id }) {
   app.innerHTML = `
@@ -67,6 +68,9 @@ export async function renderPostDetail(app, { id }) {
       script.setAttribute('crossorigin', 'anonymous');
       script.async = true;
       container.appendChild(script);
+
+      // Sync GitHub token so logged-in user can comment without re-auth
+      syncGiscusToken();
     }
   } catch (err) {
     app.innerHTML = `

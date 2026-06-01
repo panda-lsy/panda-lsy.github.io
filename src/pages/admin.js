@@ -1,80 +1,27 @@
-import { get, set, remove } from '../utils/storage.js';
+import { get, remove } from '../utils/storage.js';
 import { checkAdminAccess, fetchAllPosts, createPost, updatePost, closePost, reopenPost, fetchConfig, saveConfig } from '../api/github.js';
 import { showToast } from '../components/toast.js';
 import { createPostEditor } from '../components/post-editor.js';
 import { refreshMusicPlayer } from '../components/music-player.js';
-import { clearUser, renderHeader, setCachedUser } from '../components/header.js';
-import { OAUTH_CLIENT_ID } from '../api/config.js';
+import { clearUser, renderHeader } from '../components/header.js';
+import { navigate } from '../router.js';
 
 export async function renderAdmin(app) {
   const pat = get('gh_pat');
 
-  if (pat) {
-    const user = await checkAdminAccess(pat);
-    if (user) {
-      renderDashboard(app, user);
-      return;
-    }
-    // Logged in but not authorized
-    if (get('gh_user')) {
-      renderUnauthorized(app);
-      return;
-    }
+  if (!pat) {
+    navigate('/login');
+    return;
   }
 
-  renderLogin(app);
-}
+  const user = await checkAdminAccess(pat);
+  if (user) {
+    renderDashboard(app, user);
+    return;
+  }
 
-function renderLogin(app) {
-  const oauthUrl = OAUTH_CLIENT_ID
-    ? `https://github.com/login/oauth/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${encodeURIComponent(location.origin + '/#/auth/callback')}&scope=repo,user:read`
-    : '';
-
-  app.innerHTML = `
-    <div class="page">
-      <div class="admin-login">
-        <h1 class="admin-login__title">Admin Login</h1>
-        ${oauthUrl ? `<a href="${oauthUrl}" class="btn btn--primary" style="width:100%;text-decoration:none;margin-bottom:var(--space-4)">Login with GitHub</a>
-        <div style="text-align:center;color:var(--color-text-muted);font-size:var(--font-size-xs);margin-bottom:var(--space-4)">or use a Personal Access Token</div>` : ''}
-        <form class="admin-login__form">
-          <input type="password" class="input" placeholder="GitHub Personal Access Token" id="pat-input" autocomplete="off" />
-          <button type="submit" class="btn${oauthUrl ? ' btn--sm' : ' btn--primary'}">login with PAT</button>
-        </form>
-      </div>
-    </div>
-  `;
-
-  const form = app.querySelector('.admin-login__form');
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const input = app.querySelector('#pat-input');
-    const token = input.value.trim();
-    if (!token) return;
-
-    const btn = form.querySelector('.btn');
-    btn.textContent = 'Verifying...';
-    btn.disabled = true;
-
-    try {
-      const user = await checkAdminAccess(token);
-      if (!user) {
-        showToast('Not authorized. Only repo owner/collaborators can access admin.', 'error');
-        btn.textContent = 'login with PAT';
-        btn.disabled = false;
-        return;
-      }
-
-      set('gh_pat', token);
-      setCachedUser({ login: user.login, avatar_url: user.avatar_url });
-      renderHeader(document.getElementById('header-mount'));
-      showToast(`Logged in as ${user.login}`);
-      renderDashboard(app, user);
-    } catch (err) {
-      showToast('Verification failed: ' + err.message, 'error');
-      btn.textContent = 'Login';
-      btn.disabled = false;
-    }
-  });
+  // Logged in but not admin
+  renderUnauthorized(app);
 }
 
 function renderUnauthorized(app) {
@@ -87,14 +34,18 @@ function renderUnauthorized(app) {
           ${user ? `Logged in as <strong>${user.login}</strong>. ` : ''}
           Only the repository owner or collaborators can access the admin dashboard.
         </p>
-        <button class="btn" id="unauthorized-logout">Logout</button>
+        <div style="display:flex;gap:var(--space-3);justify-content:center">
+          <a href="#/user" class="btn">View Profile</a>
+          <button class="btn" id="unauthorized-logout">Logout</button>
+        </div>
       </div>
     </div>
   `;
   app.querySelector('#unauthorized-logout').addEventListener('click', () => {
     clearUser();
     renderHeader(document.getElementById('header-mount'));
-    renderLogin(app);
+    showToast('Logged out');
+    navigate('/login');
   });
 }
 
@@ -105,7 +56,10 @@ async function renderDashboard(app, user) {
         <div class="admin-topbar">
           <h1 class="admin-topbar__title">Dashboard</h1>
           <div style="display:flex;gap:var(--space-3);align-items:center">
-            <span style="font-size:var(--font-size-sm);color:var(--color-text-muted)">${user.login}</span>
+            <a href="#/user" style="display:flex;align-items:center;gap:var(--space-2);text-decoration:none;color:var(--color-text-secondary)">
+              <img src="${user.avatar_url}" style="width:24px;height:24px;border-radius:50%" alt="${user.login}" />
+              <span style="font-size:var(--font-size-sm)">${user.login}</span>
+            </a>
             <button class="btn btn--sm" id="logout-btn">Logout</button>
           </div>
         </div>
@@ -142,7 +96,7 @@ async function renderDashboard(app, user) {
     clearUser();
     showToast('Logged out');
     renderHeader(document.getElementById('header-mount'));
-    renderLogin(app);
+    navigate('/login');
   });
 
   app.querySelector('#new-post-btn').addEventListener('click', () => {

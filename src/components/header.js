@@ -1,7 +1,6 @@
-import { getCurrentPath, navigate } from '../router.js';
+import { getCurrentPath } from '../router.js';
 import { get, set, remove } from '../utils/storage.js';
-import { verifyPat } from '../api/github.js';
-import { OAUTH_CLIENT_ID, OAUTH_PROXY_URL } from '../api/config.js';
+import { OAUTH_CLIENT_ID } from '../api/config.js';
 
 const NAV_ITEMS = [
   { label: 'Home', hash: '#/' },
@@ -22,12 +21,12 @@ export function renderHeader(mount) {
 
   const user = getCachedUser();
   const userHtml = user
-    ? `<a href="#/admin" class="site-header__user">
+    ? `<a href="#/user" class="site-header__user">
          <img class="site-header__avatar" src="${user.avatar_url}" alt="${user.login}" />
          <span class="site-header__username">${user.login}</span>
        </a>`
     : (OAUTH_CLIENT_ID
-      ? `<a class="site-header__login-btn" href="${getOAuthUrl()}" title="Login with GitHub">LOGIN</a>`
+      ? `<a class="site-header__login-btn" href="#/login" title="Login">LOGIN</a>`
       : '');
 
   headerEl.innerHTML = `
@@ -66,12 +65,10 @@ export function renderHeader(mount) {
     }
   });
 
-  window.addEventListener('hashchange', updateActive);
-}
+  // Sync token to Giscus on load (if user logged in)
+  syncGiscusToken();
 
-function getOAuthUrl() {
-  const redirect = `${location.origin}/#/auth/callback`;
-  return `https://github.com/login/oauth/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirect)}&scope=repo,user:read`;
+  window.addEventListener('hashchange', updateActive);
 }
 
 function getCachedUser() {
@@ -93,6 +90,25 @@ export function clearUser() {
   userCache = null;
   remove('gh_user');
   remove('gh_pat');
+}
+
+export function syncGiscusToken() {
+  const pat = get('gh_pat');
+  if (!pat) return;
+  // Retry until giscus iframe is loaded
+  let retries = 0;
+  const trySync = () => {
+    const giscusFrame = document.querySelector('iframe.giscus-frame');
+    if (giscusFrame) {
+      giscusFrame.contentWindow.postMessage(
+        { giscus: { setConfig: { token: pat } } },
+        'https://giscus.app'
+      );
+      return;
+    }
+    if (retries++ < 20) setTimeout(trySync, 500);
+  };
+  trySync();
 }
 
 const updateActive = () => {
