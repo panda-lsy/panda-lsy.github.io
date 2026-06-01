@@ -17,12 +17,14 @@ import { renderHome } from './pages/home.js';
 import { renderPosts } from './pages/posts.js';
 import { renderPostDetail } from './pages/post-detail.js';
 import { renderAdmin } from './pages/admin.js';
+import { renderAuthCallback } from './pages/auth-callback.js';
 import { initMusicPlayer } from './components/music-player.js';
 
 addRoute(/^\/$/, renderHome);
 addRoute(/^\/posts$/, renderPosts);
 addRoute(/^\/posts\/(?<id>\d+)$/, renderPostDetail);
 addRoute(/^\/admin$/, renderAdmin);
+addRoute(/^\/auth\/callback$/, renderAuthCallback);
 
 function bootstrap() {
   renderHeader(document.getElementById('header-mount'));

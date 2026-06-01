@@ -3,6 +3,8 @@ import { verifyPat, fetchAllPosts, createPost, updatePost, closePost, reopenPost
 import { showToast } from '../components/toast.js';
 import { createPostEditor } from '../components/post-editor.js';
 import { refreshMusicPlayer } from '../components/music-player.js';
+import { clearUser, renderHeader, setCachedUser } from '../components/header.js';
+import { OAUTH_CLIENT_ID } from '../api/config.js';
 
 export async function renderAdmin(app) {
   const pat = get('gh_pat');
@@ -20,17 +22,20 @@ export async function renderAdmin(app) {
 }
 
 function renderLogin(app) {
+  const oauthUrl = OAUTH_CLIENT_ID
+    ? `https://github.com/login/oauth/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${encodeURIComponent(location.origin + '/#/auth/callback')}&scope=repo,user:read`
+    : '';
+
   app.innerHTML = `
     <div class="page">
       <div class="admin-login">
         <h1 class="admin-login__title">Admin Login</h1>
+        ${oauthUrl ? `<a href="${oauthUrl}" class="btn btn--primary" style="width:100%;text-decoration:none;margin-bottom:var(--space-4)">Login with GitHub</a>
+        <div style="text-align:center;color:var(--color-text-muted);font-size:var(--font-size-xs);margin-bottom:var(--space-4)">or use a Personal Access Token</div>` : ''}
         <form class="admin-login__form">
           <input type="password" class="input" placeholder="GitHub Personal Access Token" id="pat-input" autocomplete="off" />
-          <button type="submit" class="btn btn--primary">Login</button>
+          <button type="submit" class="btn${oauthUrl ? ' btn--sm' : ' btn--primary'}">Login with PAT</button>
         </form>
-        <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-4)">
-          Create a fine-grained PAT with Issues read/write permission for your repo.
-        </p>
       </div>
     </div>
   `;
@@ -56,6 +61,8 @@ function renderLogin(app) {
       }
 
       set('gh_pat', token);
+      setCachedUser({ login: user.login, avatar_url: user.avatar_url });
+      renderHeader(document.getElementById('header-mount'));
       showToast(`Logged in as ${user.login}`);
       renderDashboard(app, user);
     } catch (err) {
@@ -107,8 +114,9 @@ async function renderDashboard(app, user) {
   const postListEl = app.querySelector('#admin-post-list');
 
   app.querySelector('#logout-btn').addEventListener('click', () => {
-    remove('gh_pat');
+    clearUser();
     showToast('Logged out');
+    renderHeader(document.getElementById('header-mount'));
     renderLogin(app);
   });
 

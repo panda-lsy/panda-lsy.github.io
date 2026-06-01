@@ -5,3 +5,13 @@ export const POST_LABEL = 'post';
 export const DRAFT_LABEL = 'draft';
 export const POSTS_PER_PAGE = 10;
 export const CACHE_TTL = 5 * 60 * 1000;
+
+// Giscus (fill in from https://giscus.com after setup)
+export const GISCUS_REPO = 'panda-lsy/panda-lsy.github.io';
+export const GISCUS_REPO_ID = '';
+export const GISCUS_CATEGORY = 'Announcements';
+export const GISCUS_CATEGORY_ID = '';
+
+// GitHub OAuth
+export const OAUTH_CLIENT_ID = 'Ov23ligPcs6MbG3q3Vfh';
+export const OAUTH_PROXY_URL = 'https://auth.shengxia.qzz.io/';

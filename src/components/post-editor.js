@@ -5,6 +5,8 @@ import { get, set, remove } from '../utils/storage.js';
 const AUTOSAVE_KEY = 'post_editor_draft';
 
 const TOOLBAR_ITEMS = [
+  { label: '&#x21A9;', title: 'Undo (Ctrl+Z)', action: 'undo' },
+  { label: '&#x21AA;', title: 'Redo (Ctrl+Y)', action: 'redo' },
   { label: 'B', title: 'Bold (Ctrl+B)', action: 'bold' },
   { label: 'I', title: 'Italic (Ctrl+I)', action: 'italic', style: 'font-style:italic' },
   { label: 'H', title: 'Heading', action: 'heading' },
@@ -103,37 +105,99 @@ export function createPostEditor({ post, onSave, onCancel }) {
   titleInput.addEventListener('input', scheduleAutosave);
   labelsInput.addEventListener('input', scheduleAutosave);
 
+  // Undo/Redo stacks
+  const undoStack = [];
+  const redoStack = [];
+  const MAX_HISTORY = 100;
+
+  function snapshot() {
+    undoStack.push({
+      value: bodyInput.value,
+      start: bodyInput.selectionStart,
+      end: bodyInput.selectionEnd,
+    });
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack.length = 0;
+  }
+
+  function undo() {
+    if (!undoStack.length) return;
+    redoStack.push({
+      value: bodyInput.value,
+      start: bodyInput.selectionStart,
+      end: bodyInput.selectionEnd,
+    });
+    const s = undoStack.pop();
+    bodyInput.value = s.value;
+    bodyInput.selectionStart = s.start;
+    bodyInput.selectionEnd = s.end;
+    updatePreview();
+    scheduleAutosave();
+  }
+
+  function redo() {
+    if (!redoStack.length) return;
+    undoStack.push({
+      value: bodyInput.value,
+      start: bodyInput.selectionStart,
+      end: bodyInput.selectionEnd,
+    });
+    const s = redoStack.pop();
+    bodyInput.value = s.value;
+    bodyInput.selectionStart = s.start;
+    bodyInput.selectionEnd = s.end;
+    updatePreview();
+    scheduleAutosave();
+  }
+
+  function applyWithHistory(textarea, action) {
+    if (action === 'undo') { undo(); return; }
+    if (action === 'redo') { redo(); return; }
+    snapshot();
+    applyAction(textarea, action);
+    updatePreview();
+    scheduleAutosave();
+  }
+
   // Toolbar actions
   el.querySelector('.editor-full__toolbar').addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
-    applyAction(bodyInput, btn.dataset.action);
-    updatePreview();
-    scheduleAutosave();
+    applyWithHistory(bodyInput, btn.dataset.action);
   });
 
   // Keyboard shortcuts
   bodyInput.addEventListener('keydown', e => {
+    // Undo: only intercept when custom stack has entries
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && undoStack.length) {
+      e.preventDefault();
+      undo();
+      return;
+    }
+    // Redo
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey)) && redoStack.length) {
+      e.preventDefault();
+      redo();
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
       e.preventDefault();
-      applyAction(bodyInput, 'bold');
-      updatePreview();
-      scheduleAutosave();
+      applyWithHistory(bodyInput, 'bold');
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
       e.preventDefault();
-      applyAction(bodyInput, 'italic');
-      updatePreview();
-      scheduleAutosave();
+      applyWithHistory(bodyInput, 'italic');
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();
       el.querySelector('#editor-publish').click();
     }
-    // Tab inserts spaces
     if (e.key === 'Tab') {
       e.preventDefault();
+      snapshot();
       insertText(bodyInput, '  ');
+      updatePreview();
+      scheduleAutosave();
     }
   });
 
