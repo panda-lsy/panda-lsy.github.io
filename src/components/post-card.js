@@ -2,11 +2,16 @@ export function createPostCard(post) {
   const card = document.createElement('article');
   card.className = 'post-card';
 
-  const excerpt = post.body
-    .replace(/[#*`\[\]()!>~_-]/g, '')
-    .replace(/\n+/g, ' ')
-    .trim()
-    .slice(0, 120);
+  // Use explicit excerpt if set, otherwise auto-generate from body
+  let excerpt = post.excerpt || '';
+  if (!excerpt) {
+    excerpt = post.body
+      .replace(/<!--[\s\S]*?-->/g, '') // strip HTML comments
+      .replace(/[#*`\[\]()!>~_-]/g, '')
+      .replace(/\n+/g, ' ')
+      .trim()
+      .slice(0, 120);
+  }
 
   const date = new Date(post.date).toLocaleDateString('zh-CN', {
     year: 'numeric',

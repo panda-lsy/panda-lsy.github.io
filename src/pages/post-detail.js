@@ -2,6 +2,7 @@ import { fetchPost } from '../api/github.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import { renderComments } from '../components/comments.js';
 import { initScrollAnimations } from '../modules/scroll-animations.js';
+import { stripExcerpt } from '../utils/excerpt.js';
 
 export async function renderPostDetail(app, { id }) {
   app.innerHTML = `
@@ -26,7 +27,7 @@ export async function renderPostDetail(app, { id }) {
       .map(l => `<span class="tag">${l}</span>`)
       .join(' ');
 
-    const bodyHtml = renderMarkdown(post.body);
+    const bodyHtml = renderMarkdown(stripExcerpt(post.body));
 
     // Set page title
     document.title = `${post.title} - panda-lsy`;

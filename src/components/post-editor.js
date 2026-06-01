@@ -1,6 +1,7 @@
 import { showToast } from './toast.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import { get, set, remove } from '../utils/storage.js';
+import { extractExcerpt, stripExcerpt, injectExcerpt } from '../utils/excerpt.js';
 
 const AUTOSAVE_KEY = 'post_editor_draft';
 
@@ -29,8 +30,9 @@ export function createPostEditor({ post, onSave, onCancel }) {
   // Restore draft if creating new post
   const draft = !isEdit ? get(AUTOSAVE_KEY) : null;
   const initTitle = draft?.title || post?.title || '';
-  const initBody = draft?.body || post?.body || '';
+  const initBody = draft?.body || stripExcerpt(post?.body || '');
   const initLabels = draft?.labels || labels;
+  const initExcerpt = draft?.excerpt || extractExcerpt(post?.body || '');
 
   el.innerHTML = `
     <div class="editor-full__header">
@@ -54,6 +56,11 @@ export function createPostEditor({ post, onSave, onCancel }) {
         value="${escapeAttr(initLabels)}" placeholder="Labels (comma-separated)" />
     </div>
 
+    <div class="editor-full__excerpt-row">
+      <input type="text" class="input editor-full__excerpt-input" id="editor-excerpt"
+        value="${escapeAttr(initExcerpt)}" placeholder="Brief description (shown on card, optional)" />
+    </div>
+
     <div class="editor-full__toolbar">
       ${TOOLBAR_ITEMS.map(item =>
         `<button class="editor-full__toolbar-btn" data-action="${item.action}" title="${item.title}"${item.style ? ` style="${item.style}"` : ''}>${item.label}</button>`
@@ -73,6 +80,7 @@ export function createPostEditor({ post, onSave, onCancel }) {
   const titleInput = el.querySelector('#editor-title');
   const bodyInput = el.querySelector('#editor-body');
   const labelsInput = el.querySelector('#editor-labels');
+  const excerptInput = el.querySelector('#editor-excerpt');
   const previewEl = el.querySelector('#editor-preview');
   const statusEl = el.querySelector('#editor-status');
 
@@ -92,6 +100,7 @@ export function createPostEditor({ post, onSave, onCancel }) {
         title: titleInput.value,
         body: bodyInput.value,
         labels: labelsInput.value,
+        excerpt: excerptInput.value,
       });
       statusEl.textContent = 'Draft saved';
       setTimeout(() => { statusEl.textContent = ''; }, 2000);
@@ -104,6 +113,7 @@ export function createPostEditor({ post, onSave, onCancel }) {
   });
   titleInput.addEventListener('input', scheduleAutosave);
   labelsInput.addEventListener('input', scheduleAutosave);
+  excerptInput.addEventListener('input', scheduleAutosave);
 
   // Undo/Redo stacks
   const undoStack = [];
@@ -214,7 +224,8 @@ export function createPostEditor({ post, onSave, onCancel }) {
 
   el.querySelector('#editor-publish').addEventListener('click', () => {
     const title = titleInput.value.trim();
-    const body = bodyInput.value;
+    const excerpt = excerptInput.value.trim();
+    const body = injectExcerpt(bodyInput.value, excerpt);
     const labelsStr = labelsInput.value.trim();
 
     if (!title) {
@@ -237,6 +248,7 @@ export function createPostEditor({ post, onSave, onCancel }) {
         title: titleInput.value,
         body: bodyInput.value,
         labels: labelsInput.value,
+        excerpt: excerptInput.value,
       });
     }
   }

@@ -1,5 +1,6 @@
 import { REPO_OWNER, REPO_NAME, CONFIG_LABEL, DRAFT_LABEL, CACHE_TTL } from './config.js';
 import { get, set } from '../utils/storage.js';
+import { extractExcerpt } from '../utils/excerpt.js';
 
 const BASE_URL = 'https://api.github.com';
 const cache = new Map();
@@ -231,10 +232,12 @@ export async function saveConfig(config) {
 }
 
 function normalizeIssue(issue) {
+  const body = issue.body || '';
   return {
     number: issue.number,
     title: issue.title,
-    body: issue.body || '',
+    body,
+    excerpt: extractExcerpt(body),
     date: issue.created_at,
     updatedAt: issue.updated_at,
     labels: issue.labels.map(l => l.name),

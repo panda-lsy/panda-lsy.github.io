@@ -213,6 +213,25 @@
   border-color: var(--color-accent);
 }
 
+.editor-full__excerpt-row {
+  padding: 0 var(--space-6) var(--space-3);
+  flex-shrink: 0;
+}
+
+.editor-full__excerpt-input {
+  border: none;
+  border-bottom: 1px dashed var(--color-border);
+  border-radius: 0;
+  padding: var(--space-1) 0;
+  font-size: var(--font-size-xs);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.editor-full__excerpt-input:focus {
+  border-color: var(--color-accent);
+}
+
 .editor-full__toolbar {
   display: flex;
   align-items: center;
