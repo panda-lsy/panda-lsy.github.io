@@ -1,10 +1,12 @@
 import { get, remove } from '../utils/storage.js';
-import { checkAdminAccess, fetchAllPosts, createPost, updatePost, closePost, reopenPost, fetchConfig, saveConfig } from '../api/github.js';
+import { checkAdminAccess, fetchAllPosts, createPost, updatePost, closePost, reopenPost, fetchConfig } from '../api/github.js';
 import { showToast } from '../components/toast.js';
 import { createPostEditor } from '../components/post-editor.js';
 import { refreshMusicPlayer } from '../components/music-player.js';
 import { clearUser, renderHeader } from '../components/header.js';
+import { renderFooter } from '../components/footer.js';
 import { navigate } from '../router.js';
+import { loadSiteConfig, getSiteValue, saveSiteConfig } from '../api/site-config.js';
 
 export async function renderAdmin(app) {
   const pat = get('gh_pat');
@@ -75,14 +77,46 @@ async function renderDashboard(app, user) {
         </section>
 
         <section class="admin-section">
-          <h2 class="admin-section__title">Settings</h2>
+          <h2 class="admin-section__title">Site Settings</h2>
           <div class="admin-settings">
             <div class="admin-settings__row">
               <div style="flex:1">
-                <label class="admin-editor__label">NetEase Cloud Music Playlist ID</label>
-                <input type="text" class="input" id="playlist-input" placeholder="e.g. 123456789" />
+                <label class="admin-editor__label">Site Name</label>
+                <input type="text" class="input" id="cfg-siteName" placeholder="panda-lsy" />
               </div>
-              <button class="btn btn--sm" id="save-config-btn">Save</button>
+            </div>
+            <div class="admin-settings__row">
+              <div style="flex:1">
+                <label class="admin-editor__label">Hero Title</label>
+                <input type="text" class="input" id="cfg-heroTitle" placeholder="panda-lsy" />
+              </div>
+            </div>
+            <div class="admin-settings__row">
+              <div style="flex:1">
+                <label class="admin-editor__label">Hero Tagline</label>
+                <input type="text" class="input" id="cfg-heroTagline" placeholder="Thoughts, code, and everything in between." />
+              </div>
+            </div>
+            <div class="admin-settings__row">
+              <div style="flex:1">
+                <label class="admin-editor__label">Recent Posts Title</label>
+                <input type="text" class="input" id="cfg-recentTitle" placeholder="Recent Posts" />
+              </div>
+            </div>
+            <div class="admin-settings__row">
+              <div style="flex:1">
+                <label class="admin-editor__label">Footer Text</label>
+                <input type="text" class="input" id="cfg-footerText" placeholder="Built with simplicity." />
+              </div>
+            </div>
+            <div class="admin-settings__row">
+              <div style="flex:1">
+                <label class="admin-editor__label">NetEase Cloud Music Playlist ID</label>
+                <input type="text" class="input" id="cfg-musicPlaylistId" placeholder="e.g. 123456789" />
+              </div>
+            </div>
+            <div class="admin-settings__row">
+              <button class="btn btn--primary btn--sm" id="save-config-btn">Save Settings</button>
             </div>
           </div>
         </section>
@@ -104,11 +138,19 @@ async function renderDashboard(app, user) {
   });
 
   app.querySelector('#save-config-btn').addEventListener('click', async () => {
-    const playlistId = app.querySelector('#playlist-input').value.trim();
+    const updates = {};
+    ['siteName', 'heroTitle', 'heroTagline', 'recentTitle', 'footerText', 'musicPlaylistId'].forEach(key => {
+      const input = app.querySelector(`#cfg-${key}`);
+      if (input) updates[key] = input.value.trim();
+    });
+
     try {
-      await saveConfig({ musicPlaylistId: playlistId });
+      await saveSiteConfig(updates);
       showToast('Settings saved');
-      await refreshMusicPlayer();
+      // Refresh components that depend on config
+      renderHeader(document.getElementById('header-mount'));
+      renderFooter(document.getElementById('footer-mount'));
+      if (updates.musicPlaylistId !== undefined) await refreshMusicPlayer();
     } catch (err) {
       showToast('Failed to save: ' + err.message, 'error');
     }
@@ -116,14 +158,12 @@ async function renderDashboard(app, user) {
 
   loadPosts(postListEl);
 
-  try {
-    const config = await fetchConfig();
-    if (config.musicPlaylistId) {
-      app.querySelector('#playlist-input').value = config.musicPlaylistId;
-    }
-  } catch (err) {
-    console.warn('Failed to load config:', err);
-  }
+  // Load current config values into form
+  await loadSiteConfig();
+  ['siteName', 'heroTitle', 'heroTagline', 'recentTitle', 'footerText', 'musicPlaylistId'].forEach(key => {
+    const input = app.querySelector(`#cfg-${key}`);
+    if (input) input.value = getSiteValue(key);
+  });
 
   async function loadPosts(listEl) {
     listEl.innerHTML = '<div class="loading">Loading...</div>';

@@ -1,9 +1,11 @@
 import { getCurrentPath } from '../router.js';
 import { get, set, remove } from '../utils/storage.js';
 import { OAUTH_CLIENT_ID } from '../api/config.js';
+import { getSiteValue } from '../api/site-config.js';
 
 const NAV_ITEMS = [
   { label: 'Home', hash: '#/' },
+  { label: 'Timeline', hash: '#/timeline' },
   { label: 'Posts', hash: '#/posts' },
 ];
 
@@ -33,7 +35,7 @@ export function renderHeader(mount) {
     <div class="site-header__inner">
       <a href="#/" class="site-header__brand">
         <img class="site-header__logo" src="${iconSrc}" alt="logo" />
-        <span class="site-header__name">panda-lsy</span>
+        <span class="site-header__name">${escHtml(getSiteValue('siteName'))}</span>
       </a>
       <nav class="site-header__nav">
         ${NAV_ITEMS.map(item =>
@@ -99,4 +101,10 @@ function getTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   set('theme', theme);
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
 }

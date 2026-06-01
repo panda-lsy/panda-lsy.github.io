@@ -13,6 +13,7 @@ import './styles/login.css';
 import './styles/user.css';
 import './styles/comments.css';
 import './styles/animations.css';
+import './styles/timeline.css';
 
 import { addRoute, initRouter } from './router.js';
 import { renderHeader } from './components/header.js';
@@ -24,11 +25,13 @@ import { renderAdmin } from './pages/admin.js';
 import { renderAuthCallback } from './pages/auth-callback.js';
 import { renderLogin } from './pages/login.js';
 import { renderUser } from './pages/user.js';
+import { renderTimeline } from './pages/timeline.js';
 import { initMusicPlayer } from './components/music-player.js';
 
 addRoute(/^\/$/, renderHome);
 addRoute(/^\/posts$/, renderPosts);
 addRoute(/^\/posts\/(?<id>\d+)$/, renderPostDetail);
+addRoute(/^\/timeline$/, renderTimeline);
 addRoute(/^\/admin$/, renderAdmin);
 addRoute(/^\/auth\/callback$/, renderAuthCallback);
 addRoute(/^\/login$/, renderLogin);
