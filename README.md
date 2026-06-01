@@ -48,12 +48,12 @@ npm run dev
 
 ## Routes
 
-| Route | Description |
-|-------|-------------|
-| `#/` | Home page |
-| `#/posts` | All posts |
-| `#/posts/:id` | Post detail |
-| `#/admin` | Admin dashboard |
+| Route           | Description     |
+| --------------- | --------------- |
+| `#/`          | Home page       |
+| `#/posts`     | All posts       |
+| `#/posts/:id` | Post detail     |
+| `#/admin`     | Admin dashboard |
 
 ## Admin
 
