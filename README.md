@@ -1,43 +1,70 @@
 # panda-lsy.github.io
 
-Modern, scalable frontend scaffold for an interactive portfolio built with **Vite + Vanilla JavaScript**.
+A minimalist black & white personal blog with GitHub Issues CMS and NetEase Cloud Music integration.
 
-## Tech stack
+## Tech Stack
 
-- Vite (build/dev tooling)
-- Vanilla JavaScript (modular architecture)
-- GSAP + ScrollTrigger (animation orchestration)
-- Three.js (3D scene rendering)
-- Rive-ready controller layer (`src/rive`) for future runtime wiring
+- **Vite** - Build tooling
+- **Vanilla JavaScript** - No framework, modular architecture
+- **GitHub Issues API** - CMS for posts (read public, write via PAT)
+- **NetEase Cloud Music** - Embedded playlist player
+- **marked** - Markdown rendering
 
-## Project structure
+## Project Structure
 
-```text
+```
 src/
-  core/      # app bootstrap + shared state
-  three/     # Three.js scene setup and lifecycle
-  gsap/      # GSAP animation timelines and scroll triggers
-  rive/      # Rive controller scaffolding
-  modules/   # feature modules (farm system, interactions)
-  assets/    # static assets, textures, models
+  main.js              # Entry point
+  router.js            # Hash-based SPA router
+  api/
+    config.js          # Repo/config constants
+    github.js          # GitHub Issues API client
+  pages/
+    home.js            # Home page (hero + recent posts)
+    posts.js           # Posts list with pagination
+    post-detail.js     # Single post view
+    admin.js           # Admin dashboard (login, CRUD, settings)
+  components/
+    header.js          # Site navigation
+    footer.js          # Footer
+    music-player.js    # Floating NetEase player widget
+    post-card.js       # Post preview card
+    post-editor.js     # Markdown editor form
+    pagination.js      # Page navigation
+    toast.js           # Notification toasts
+  styles/              # CSS (design tokens + component styles)
+  utils/
+    markdown.js        # Markdown -> HTML (via marked)
+    sanitize.js        # HTML sanitizer (XSS prevention)
+    storage.js         # localStorage helpers
 ```
 
-## Scripts
-
-- `npm run dev` - start local dev server
-- `npm run build` - production build
-- `npm run preview` - preview production build
-
-## Getting started
+## Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the URL printed by Vite (default: `http://localhost:5173`).
+## Routes
 
-## Notes
+| Route | Description |
+|-------|-------------|
+| `#/` | Home page |
+| `#/posts` | All posts |
+| `#/posts/:id` | Post detail |
+| `#/admin` | Admin dashboard |
 
-- Landing page includes a fullscreen hero, a Three.js canvas placeholder container, and smooth scrolling (`scroll-behavior: smooth`).
-- Rive integration is intentionally scaffolded behind `src/rive/riveController.js`, so runtime-specific wiring can be added without touching app initialization flow.
+## Admin
+
+Navigate to `#/admin` and log in with a GitHub Personal Access Token (fine-grained, Issues read/write scope for this repo).
+
+- **Create/edit/delete posts** - stored as GitHub Issues with `post` label
+- **Settings** - configure NetEase Cloud Music playlist ID
+- **Drafts** - Issues with `draft` label are hidden from public listings
+
+## Scripts
+
+- `npm run dev` - Local dev server
+- `npm run build` - Production build
+- `npm run preview` - Preview production build

@@ -1,0 +1,35 @@
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+.container--wide {
+  max-width: var(--container-wide);
+}
+
+.page {
+  padding-top: var(--space-24);
+  padding-bottom: var(--space-24);
+  min-height: 100vh;
+}
+
+.section {
+  margin-bottom: var(--space-16);
+}
+
+.section__title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding-top: var(--space-16);
+    padding-bottom: var(--space-16);
+  }
+}
