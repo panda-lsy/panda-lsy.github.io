@@ -78,8 +78,6 @@ async function renderDashboard(app, user) {
           </div>
         </div>
 
-        <div id="editor-mount"></div>
-
         <section class="admin-section">
           <div class="admin-section__header">
             <h2 class="admin-section__title">Posts</h2>
@@ -106,7 +104,6 @@ async function renderDashboard(app, user) {
     </div>
   `;
 
-  const editorMount = app.querySelector('#editor-mount');
   const postListEl = app.querySelector('#admin-post-list');
 
   app.querySelector('#logout-btn').addEventListener('click', () => {
@@ -116,7 +113,7 @@ async function renderDashboard(app, user) {
   });
 
   app.querySelector('#new-post-btn').addEventListener('click', () => {
-    openEditor(editorMount, null, () => loadPosts(postListEl));
+    openEditor(null, () => loadPosts(postListEl));
   });
 
   app.querySelector('#save-config-btn').addEventListener('click', async () => {
@@ -177,7 +174,7 @@ async function renderDashboard(app, user) {
         btn.addEventListener('click', () => {
           const num = parseInt(btn.dataset.edit);
           const post = posts.find(p => p.number === num);
-          openEditor(editorMount, post, () => loadPosts(listEl));
+          openEditor(post, () => loadPosts(listEl));
         });
       });
 
@@ -212,9 +209,8 @@ async function renderDashboard(app, user) {
     }
   }
 
-  function openEditor(mount, post, onSave) {
-    mount.innerHTML = '';
-    mount.appendChild(createPostEditor({
+  function openEditor(post, onSave) {
+    const editorEl = createPostEditor({
       post,
       onSave: async (data) => {
         try {
@@ -225,16 +221,17 @@ async function renderDashboard(app, user) {
             await createPost(data);
             showToast('Post created');
           }
-          mount.innerHTML = '';
+          editorEl.remove();
           onSave();
         } catch (err) {
           showToast('Failed: ' + err.message, 'error');
         }
       },
       onCancel: () => {
-        mount.innerHTML = '';
+        editorEl.remove();
       },
-    }));
+    });
+    document.body.appendChild(editorEl);
   }
 }
 

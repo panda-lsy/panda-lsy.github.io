@@ -27,6 +27,14 @@
   margin-bottom: var(--space-6);
 }
 
+body.has-player .page {
+  padding-bottom: calc(var(--space-24) + 64px);
+}
+
+body.has-player .site-footer {
+  padding-bottom: calc(var(--space-8) + 64px);
+}
+
 @media (max-width: 768px) {
   .page {
     padding-top: calc(var(--space-16) + 8px);

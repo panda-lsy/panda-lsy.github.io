@@ -148,6 +148,7 @@ function togglePlayer() {
   state.visible = !state.visible;
   els.player.classList.toggle('is-visible', state.visible);
   els.toggle.classList.toggle('is-hidden', state.visible);
+  document.body.classList.toggle('has-player', state.visible);
 }
 
 function togglePlay() {

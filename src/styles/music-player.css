@@ -233,20 +233,54 @@
   font-size: var(--font-size-sm);
 }
 
-/* Mobile */
+/* Mobile - two-row layout */
 @media (max-width: 768px) {
+  .music-player__bar {
+    flex-wrap: wrap;
+    padding: var(--space-2) var(--space-4);
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+    gap: var(--space-2) var(--space-3);
+  }
+
+  /* Row 1: cover + info + play + list */
+  .music-player__cover {
+    width: 32px;
+    height: 32px;
+  }
+
+  .music-player__info {
+    order: 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .music-player__controls {
+    order: 1;
+  }
+
+  .music-player__btn--list {
+    order: 2;
+  }
+
+  /* Row 2: progress bar full width */
   .music-player__progress-wrap {
-    flex: 0 0 70px;
+    order: 3;
+    flex: 1 0 100%;
   }
 
   .music-player__time {
     display: none;
   }
 
-  .music-player__bar {
-    padding: var(--space-2) var(--space-4);
-    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
-    gap: var(--space-3);
+  .music-player__btn--play {
+    width: 32px;
+    height: 32px;
+  }
+
+  .music-player__btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
   }
 
   .music-player__panel {
@@ -259,15 +293,5 @@
     width: 40px;
     height: 40px;
     font-size: 16px;
-  }
-
-  .music-player__cover {
-    width: 34px;
-    height: 34px;
-  }
-
-  .music-player__btn--play {
-    width: 32px;
-    height: 32px;
   }
 }

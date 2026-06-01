@@ -1,39 +1,161 @@
 import { showToast } from './toast.js';
+import { renderMarkdown } from '../utils/markdown.js';
+import { get, set, remove } from '../utils/storage.js';
+
+const AUTOSAVE_KEY = 'post_editor_draft';
+
+const TOOLBAR_ITEMS = [
+  { label: 'B', title: 'Bold (Ctrl+B)', action: 'bold' },
+  { label: 'I', title: 'Italic (Ctrl+I)', action: 'italic', style: 'font-style:italic' },
+  { label: 'H', title: 'Heading', action: 'heading' },
+  { label: '&mdash;', title: 'Divider', action: 'hr' },
+  { label: '&ldquo;', title: 'Quote', action: 'quote' },
+  { label: '&bull;', title: 'Unordered List', action: 'ul' },
+  { label: '1.', title: 'Ordered List', action: 'ol' },
+  { label: '&lt;/&gt;', title: 'Code', action: 'code' },
+  { label: '[ ]', title: 'Link', action: 'link' },
+  { label: '[ ! ]', title: 'Image', action: 'image' },
+];
 
 export function createPostEditor({ post, onSave, onCancel }) {
   const el = document.createElement('div');
-  el.className = 'admin-editor';
+  el.className = 'editor-full';
 
   const isEdit = !!post;
   const labels = (post?.labels || []).filter(l => l !== 'post' && l !== 'site-config').join(', ');
 
+  // Restore draft if creating new post
+  const draft = !isEdit ? get(AUTOSAVE_KEY) : null;
+  const initTitle = draft?.title || post?.title || '';
+  const initBody = draft?.body || post?.body || '';
+  const initLabels = draft?.labels || labels;
+
   el.innerHTML = `
-    <h3 style="margin-bottom:var(--space-4)">${isEdit ? 'Edit Post' : 'New Post'}</h3>
-    <div class="admin-editor__field">
-      <label class="admin-editor__label">Title</label>
-      <input type="text" class="input" id="editor-title" value="${escapeAttr(post?.title || '')}" />
+    <div class="editor-full__header">
+      <div class="editor-full__header-left">
+        <button class="btn btn--sm" id="editor-back">&larr; Back</button>
+        <span class="editor-full__status" id="editor-status"></span>
+      </div>
+      <div class="editor-full__header-right">
+        <button class="btn btn--sm" id="editor-discard">Discard</button>
+        <button class="btn btn--primary btn--sm" id="editor-publish">${isEdit ? 'Update' : 'Publish'}</button>
+      </div>
     </div>
-    <div class="admin-editor__field">
-      <label class="admin-editor__label">Body (Markdown)</label>
-      <textarea class="admin-editor__textarea" id="editor-body">${escapeText(post?.body || '')}</textarea>
+
+    <div class="editor-full__title-row">
+      <input type="text" class="editor-full__title-input" id="editor-title"
+        value="${escapeAttr(initTitle)}" placeholder="Post title..." />
     </div>
-    <div class="admin-editor__field">
-      <label class="admin-editor__label">Labels (comma-separated)</label>
-      <input type="text" class="input" id="editor-labels" value="${escapeAttr(labels)}" placeholder="e.g. tech, life" />
+
+    <div class="editor-full__labels-row">
+      <input type="text" class="input editor-full__labels-input" id="editor-labels"
+        value="${escapeAttr(initLabels)}" placeholder="Labels (comma-separated)" />
     </div>
-    <div style="display:flex;gap:var(--space-3);margin-top:var(--space-4)">
-      <button class="btn btn--primary" id="editor-save">${isEdit ? 'Update' : 'Publish'}</button>
-      <button class="btn" id="editor-cancel">Cancel</button>
+
+    <div class="editor-full__toolbar">
+      ${TOOLBAR_ITEMS.map(item =>
+        `<button class="editor-full__toolbar-btn" data-action="${item.action}" title="${item.title}"${item.style ? ` style="${item.style}"` : ''}>${item.label}</button>`
+      ).join('')}
+    </div>
+
+    <div class="editor-full__body">
+      <div class="editor-full__pane editor-full__pane--edit">
+        <textarea class="editor-full__textarea" id="editor-body" placeholder="Write your post in Markdown...">${escapeText(initBody)}</textarea>
+      </div>
+      <div class="editor-full__pane editor-full__pane--preview">
+        <div class="editor-full__preview post-detail__body" id="editor-preview"></div>
+      </div>
     </div>
   `;
 
-  el.querySelector('#editor-save').addEventListener('click', () => {
-    const title = el.querySelector('#editor-title').value.trim();
-    const body = el.querySelector('#editor-body').value;
-    const labelsStr = el.querySelector('#editor-labels').value.trim();
+  const titleInput = el.querySelector('#editor-title');
+  const bodyInput = el.querySelector('#editor-body');
+  const labelsInput = el.querySelector('#editor-labels');
+  const previewEl = el.querySelector('#editor-preview');
+  const statusEl = el.querySelector('#editor-status');
+
+  // Live preview
+  const updatePreview = () => {
+    previewEl.innerHTML = renderMarkdown(bodyInput.value);
+  };
+  updatePreview();
+
+  // Auto-save on input (new posts only)
+  let autosaveTimer = null;
+  const scheduleAutosave = () => {
+    if (isEdit) return;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      set(AUTOSAVE_KEY, {
+        title: titleInput.value,
+        body: bodyInput.value,
+        labels: labelsInput.value,
+      });
+      statusEl.textContent = 'Draft saved';
+      setTimeout(() => { statusEl.textContent = ''; }, 2000);
+    }, 1000);
+  };
+
+  bodyInput.addEventListener('input', () => {
+    updatePreview();
+    scheduleAutosave();
+  });
+  titleInput.addEventListener('input', scheduleAutosave);
+  labelsInput.addEventListener('input', scheduleAutosave);
+
+  // Toolbar actions
+  el.querySelector('.editor-full__toolbar').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    applyAction(bodyInput, btn.dataset.action);
+    updatePreview();
+    scheduleAutosave();
+  });
+
+  // Keyboard shortcuts
+  bodyInput.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      e.preventDefault();
+      applyAction(bodyInput, 'bold');
+      updatePreview();
+      scheduleAutosave();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+      e.preventDefault();
+      applyAction(bodyInput, 'italic');
+      updatePreview();
+      scheduleAutosave();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      el.querySelector('#editor-publish').click();
+    }
+    // Tab inserts spaces
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      insertText(bodyInput, '  ');
+    }
+  });
+
+  // Buttons
+  el.querySelector('#editor-back').addEventListener('click', () => {
+    if (!isEdit) saveDraft();
+    onCancel();
+  });
+
+  el.querySelector('#editor-discard').addEventListener('click', () => {
+    if (!isEdit) remove(AUTOSAVE_KEY);
+    onCancel();
+  });
+
+  el.querySelector('#editor-publish').addEventListener('click', () => {
+    const title = titleInput.value.trim();
+    const body = bodyInput.value;
+    const labelsStr = labelsInput.value.trim();
 
     if (!title) {
       showToast('Title is required', 'error');
+      titleInput.focus();
       return;
     }
 
@@ -41,18 +163,67 @@ export function createPostEditor({ post, onSave, onCancel }) {
       ? labelsStr.split(',').map(s => s.trim()).filter(Boolean)
       : [];
 
+    if (!isEdit) remove(AUTOSAVE_KEY);
     onSave({ title, body, labels });
   });
 
-  el.querySelector('#editor-cancel').addEventListener('click', onCancel);
+  function saveDraft() {
+    if (titleInput.value.trim() || bodyInput.value.trim()) {
+      set(AUTOSAVE_KEY, {
+        title: titleInput.value,
+        body: bodyInput.value,
+        labels: labelsInput.value,
+      });
+    }
+  }
 
   return el;
 }
 
+function applyAction(textarea, action) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selected = textarea.value.substring(start, end);
+
+  const actions = {
+    bold:       { before: '**',  after: '**',  placeholder: 'bold text' },
+    italic:     { before: '*',   after: '*',   placeholder: 'italic text' },
+    heading:    { before: '\n## ', after: '',  placeholder: 'heading' },
+    hr:         { before: '\n\n---\n\n', after: '', placeholder: '' },
+    quote:      { before: '\n> ', after: '',   placeholder: 'quote' },
+    ul:         { before: '\n- ', after: '',   placeholder: 'list item' },
+    ol:         { before: '\n1. ', after: '',  placeholder: 'list item' },
+    code:       { before: selected.includes('\n') ? '```\n' : '`',
+                  after: selected.includes('\n') ? '\n```' : '`',
+                  placeholder: 'code' },
+    link:       { before: '[', after: '](url)', placeholder: 'link text' },
+    image:      { before: '![', after: '](url)', placeholder: 'alt text' },
+  };
+
+  const a = actions[action];
+  if (!a) return;
+
+  const text = selected || a.placeholder;
+  const insert = `${a.before}${text}${a.after}`;
+  textarea.setRangeText(insert, start, end, 'end');
+  textarea.focus();
+
+  // Select the placeholder text if nothing was selected
+  if (!selected && a.placeholder) {
+    textarea.selectionStart = start + a.before.length;
+    textarea.selectionEnd = start + a.before.length + a.placeholder.length;
+  }
+}
+
+function insertText(textarea, text) {
+  const start = textarea.selectionStart;
+  textarea.setRangeText(text, start, start, 'end');
+}
+
 function escapeAttr(str) {
-  return str.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function escapeText(str) {
-  return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
