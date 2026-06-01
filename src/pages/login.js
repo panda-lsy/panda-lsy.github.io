@@ -28,7 +28,7 @@ export function renderLogin(app) {
   }
 
   const oauthUrl = OAUTH_CLIENT_ID
-    ? `https://github.com/login/oauth/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${encodeURIComponent(location.origin + '/#/auth/callback')}&scope=public_repo`
+    ? `https://github.com/login/oauth/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${encodeURIComponent(location.origin + '/#/auth/callback')}&scope=repo`
     : '';
 
   app.innerHTML = `

@@ -21,33 +21,33 @@ export async function renderAuthCallback(app, _, params) {
   `;
 
   try {
+    // Exchange code for token via proxy
     const res = await fetch(OAUTH_PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),
     });
 
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(errBody.error || `Token exchange failed (${res.status})`);
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || `Proxy returned ${res.status}`);
     }
 
-    const data = await res.json();
     const token = data.access_token;
-    if (!token) throw new Error('No access token returned');
+    if (!token) throw new Error('No access_token in proxy response');
 
+    // Validate token by fetching user info
     set('gh_pat', token);
-
     const user = await verifyPat(token);
-    if (!user) throw new Error('Invalid token');
+    if (!user || !user.login) {
+      throw new Error('Token is invalid or missing user scope');
+    }
 
     setCachedUser({ login: user.login, avatar_url: user.avatar_url });
+    renderHeader(document.getElementById('header-mount'));
 
-    // Re-render header with user info
-    const headerMount = document.getElementById('header-mount');
-    renderHeader(headerMount);
-
-    // Sync token to Giscus so user can comment without re-login
+    // Sync token to Giscus for seamless commenting
     syncGiscusToken();
 
     showToast(`Welcome, ${user.login}!`);
