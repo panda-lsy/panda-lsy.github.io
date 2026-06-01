@@ -250,3 +250,35 @@ function invalidatePostCache() {
     }
   }
 }
+
+// Comments API (uses the post's issue number directly)
+export async function fetchComments(issueNumber) {
+  const data = await request(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/issues/${issueNumber}/comments?per_page=100`
+  );
+  return data.map(c => ({
+    id: c.id,
+    body: c.body,
+    date: c.created_at,
+    user: {
+      login: c.user.login,
+      avatar_url: c.user.avatar_url,
+    },
+  }));
+}
+
+export async function postComment(issueNumber, body) {
+  const data = await request(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/issues/${issueNumber}/comments`,
+    { method: 'POST', body: { body }, auth: true }
+  );
+  return {
+    id: data.id,
+    body: data.body,
+    date: data.created_at,
+    user: {
+      login: data.user.login,
+      avatar_url: data.user.avatar_url,
+    },
+  };
+}

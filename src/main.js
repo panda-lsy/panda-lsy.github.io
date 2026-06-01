@@ -11,6 +11,7 @@ import './styles/admin.css';
 import './styles/music-player.css';
 import './styles/login.css';
 import './styles/user.css';
+import './styles/comments.css';
 
 import { addRoute, initRouter } from './router.js';
 import { renderHeader } from './components/header.js';

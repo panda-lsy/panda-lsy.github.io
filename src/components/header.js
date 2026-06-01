@@ -55,18 +55,7 @@ export function renderHeader(mount) {
     if (logo) logo.src = next === 'dark' ? '/icon-white.png' : '/icon-black.png';
     headerEl.querySelector('.site-header__theme-toggle').innerHTML =
       next === 'dark' ? '&#9788;' : '&#9790;';
-    // Sync Giscus theme
-    const giscusFrame = document.querySelector('iframe.giscus-frame');
-    if (giscusFrame) {
-      giscusFrame.contentWindow.postMessage(
-        { giscus: { setConfig: { theme: next === 'dark' ? 'dark_dimmed' : 'light' } } },
-        'https://giscus.app'
-      );
-    }
   });
-
-  // Sync token to Giscus on load (if user logged in)
-  syncGiscusToken();
 
   window.addEventListener('hashchange', updateActive);
 }
@@ -90,25 +79,6 @@ export function clearUser() {
   userCache = null;
   remove('gh_user');
   remove('gh_pat');
-}
-
-export function syncGiscusToken() {
-  const pat = get('gh_pat');
-  if (!pat) return;
-  // Retry until giscus iframe is loaded
-  let retries = 0;
-  const trySync = () => {
-    const giscusFrame = document.querySelector('iframe.giscus-frame');
-    if (giscusFrame) {
-      giscusFrame.contentWindow.postMessage(
-        { giscus: { setConfig: { token: pat } } },
-        'https://giscus.app'
-      );
-      return;
-    }
-    if (retries++ < 20) setTimeout(trySync, 500);
-  };
-  trySync();
 }
 
 const updateActive = () => {

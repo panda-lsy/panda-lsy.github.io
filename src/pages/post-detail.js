@@ -1,7 +1,6 @@
 import { fetchPost } from '../api/github.js';
 import { renderMarkdown } from '../utils/markdown.js';
-import { GISCUS_REPO, GISCUS_REPO_ID, GISCUS_CATEGORY, GISCUS_CATEGORY_ID } from '../api/config.js';
-import { syncGiscusToken } from '../components/header.js';
+import { renderComments } from '../components/comments.js';
 
 export async function renderPostDetail(app, { id }) {
   app.innerHTML = `
@@ -28,7 +27,7 @@ export async function renderPostDetail(app, { id }) {
 
     const bodyHtml = renderMarkdown(post.body);
 
-    // Set page title for Giscus title mapping
+    // Set page title
     document.title = `${post.title} - panda-lsy`;
 
     app.innerHTML = `
@@ -46,32 +45,15 @@ export async function renderPostDetail(app, { id }) {
             </header>
             <div class="post-detail__body">${bodyHtml}</div>
           </article>
-          <div class="giscus-wrap" id="giscus-container"></div>
+          <div id="comments-container"></div>
         </div>
       </div>
     `;
 
-    // Load Giscus if configured
-    if (GISCUS_REPO_ID && GISCUS_CATEGORY_ID) {
-      const container = app.querySelector('#giscus-container');
-      const theme = document.documentElement.getAttribute('data-theme');
-      const script = document.createElement('script');
-      script.src = 'https://giscus.app/client.js';
-      script.setAttribute('data-repo', GISCUS_REPO);
-      script.setAttribute('data-repo-id', GISCUS_REPO_ID);
-      script.setAttribute('data-category', GISCUS_CATEGORY);
-      script.setAttribute('data-category-id', GISCUS_CATEGORY_ID);
-      script.setAttribute('data-mapping', 'title');
-      script.setAttribute('data-strict', '0');
-      script.setAttribute('data-theme', theme === 'dark' ? 'dark_dimmed' : 'light');
-      script.setAttribute('data-lang', 'zh-CN');
-      script.setAttribute('crossorigin', 'anonymous');
-      script.async = true;
-      container.appendChild(script);
+    // Load comments
+    const commentsContainer = app.querySelector('#comments-container');
+    await renderComments(commentsContainer, parseInt(id));
 
-      // Sync GitHub token so logged-in user can comment without re-auth
-      syncGiscusToken();
-    }
   } catch (err) {
     app.innerHTML = `
       <div class="page">
