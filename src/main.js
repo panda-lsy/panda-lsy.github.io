@@ -27,12 +27,13 @@ addRoute(/^\/admin$/, renderAdmin);
 addRoute(/^\/auth\/callback$/, renderAuthCallback);
 
 function bootstrap() {
-  // GitHub OAuth redirects with ?code=xxx#/auth/callback
-  // Move the code from query string into the hash so our router can read it
+  // GitHub OAuth redirects with ?code=xxx at the domain root
+  // Move the code into the hash so our router can handle it
   const searchParams = new URLSearchParams(location.search);
   const code = searchParams.get('code');
   if (code) {
-    window.history.replaceState(null, '', `#/auth/callback?code=${code}`);
+    window.history.replaceState(null, '', location.pathname);
+    location.hash = `#/auth/callback?code=${code}`;
   }
 
   renderHeader(document.getElementById('header-mount'));
