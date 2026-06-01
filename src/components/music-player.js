@@ -2,6 +2,7 @@ import { fetchConfig } from '../api/github.js';
 import { get, set } from '../utils/storage.js';
 
 const API_BASE = 'https://meting.mikus.ink/api';
+const STATE_KEY = 'music_player_state';
 const audio = new Audio();
 let state = {
   songs: [],
@@ -10,8 +11,25 @@ let state = {
   panelOpen: false,
   visible: false,
   loading: false,
+  muted: false,
 };
 let els = {};
+
+function saveState() {
+  set(STATE_KEY, {
+    idx: state.currentIdx,
+    time: audio.currentTime || 0,
+    playing: state.playing,
+    muted: state.muted,
+    visible: state.visible,
+  });
+}
+
+function loadSavedState() {
+  const s = get(STATE_KEY);
+  if (!s) return null;
+  return s;
+}
 
 export async function initMusicPlayer(mount) {
   mount.innerHTML = `
@@ -36,7 +54,9 @@ export async function initMusicPlayer(mount) {
           </div>
           <span class="music-player__time music-player__time--total">0:00</span>
         </div>
+        <button class="music-player__btn" data-action="mute" title="Mute/Unmute">&#9834;</button>
         <button class="music-player__btn music-player__btn--list" data-action="list" title="Playlist">&#9776;</button>
+        <button class="music-player__btn" data-action="minimize" title="Minimize">&#8722;</button>
       </div>
     </div>
   `;
@@ -49,24 +69,43 @@ export async function initMusicPlayer(mount) {
     title: mount.querySelector('.music-player__title'),
     artist: mount.querySelector('.music-player__artist'),
     playBtn: mount.querySelector('[data-action="play"]'),
+    muteBtn: mount.querySelector('[data-action="mute"]'),
     progressFill: mount.querySelector('.music-player__progress-fill'),
     progress: mount.querySelector('.music-player__progress'),
     timeCurrent: mount.querySelector('.music-player__time--current'),
     timeTotal: mount.querySelector('.music-player__time--total'),
   };
 
-  els.toggle.addEventListener('click', togglePlayer);
+  els.toggle.addEventListener('click', () => togglePlayer(true));
   mount.querySelector('[data-action="prev"]').addEventListener('click', prev);
   mount.querySelector('[data-action="play"]').addEventListener('click', togglePlay);
   mount.querySelector('[data-action="next"]').addEventListener('click', next);
   mount.querySelector('[data-action="list"]').addEventListener('click', togglePanel);
+  mount.querySelector('[data-action="mute"]').addEventListener('click', toggleMute);
+  mount.querySelector('[data-action="minimize"]').addEventListener('click', () => togglePlayer(false));
   els.progress.addEventListener('click', seek);
 
-  audio.addEventListener('timeupdate', updateProgress);
-  audio.addEventListener('ended', next);
+  audio.addEventListener('timeupdate', () => {
+    updateProgress();
+    // Save state periodically (every 5 seconds)
+    if (Math.floor(audio.currentTime) % 5 === 0) saveState();
+  });
+  audio.addEventListener('ended', () => {
+    next();
+    saveState();
+  });
   audio.addEventListener('loadedmetadata', () => {
     els.timeTotal.textContent = formatTime(audio.duration);
   });
+
+  // Restore muted state
+  const saved = loadSavedState();
+  if (saved?.muted) {
+    state.muted = true;
+    audio.muted = true;
+    els.muteBtn.innerHTML = '&#9834;<s>';
+    els.muteBtn.style.opacity = '0.5';
+  }
 
   await loadPlaylist();
 }
@@ -97,7 +136,7 @@ async function loadPlaylist() {
 
     if (!songs.length) return;
 
-    state.songs = songs.map((s, i) => ({
+    state.songs = songs.map((s) => ({
       id: extractId(s.url),
       title: s.title,
       author: s.author,
@@ -106,9 +145,40 @@ async function loadPlaylist() {
     }));
 
     renderPlaylist();
-    if (state.currentIdx < 0) {
-      state.currentIdx = 0;
-      loadTrack(0);
+
+    // Restore saved state
+    const saved = loadSavedState();
+    const restoreIdx = saved?.idx >= 0 && saved.idx < state.songs.length ? saved.idx : 0;
+    const restoreTime = saved?.time || 0;
+    const shouldPlay = saved?.playing || false;
+    const shouldShow = saved?.visible || false;
+
+    state.currentIdx = restoreIdx;
+    loadTrack(restoreIdx);
+
+    // Restore playback position after audio loads
+    if (restoreTime > 0) {
+      const onLoaded = () => {
+        audio.currentTime = restoreTime;
+        audio.removeEventListener('loadedmetadata', onLoaded);
+      };
+      audio.addEventListener('loadedmetadata', onLoaded);
+    }
+
+    // Restore visibility
+    if (shouldShow) {
+      togglePlayer(true);
+    }
+
+    // Auto-play if was playing
+    if (shouldPlay) {
+      state.playing = true;
+      els.playBtn.innerHTML = '&#9646;&#9646;';
+      audio.play().catch(() => {
+        // Browser may block autoplay; user needs to click play
+        state.playing = false;
+        els.playBtn.innerHTML = '&#9654;';
+      });
     }
   } catch (err) {
     console.error('Music player: failed to load playlist', err);
@@ -142,24 +212,36 @@ function loadTrack(idx) {
   els.timeTotal.textContent = '0:00';
 
   updateActivePlaylistItem();
+  saveState();
 }
 
-function togglePlayer() {
-  state.visible = !state.visible;
+function togglePlayer(show) {
+  state.visible = show !== undefined ? show : !state.visible;
   els.player.classList.toggle('is-visible', state.visible);
   els.toggle.classList.toggle('is-hidden', state.visible);
   document.body.classList.toggle('has-player', state.visible);
+  saveState();
 }
 
 function togglePlay() {
   if (!state.songs.length) return;
   if (state.playing) {
     audio.pause();
+    state.playing = false;
   } else {
     audio.play().catch(() => {});
+    state.playing = true;
   }
-  state.playing = !state.playing;
   els.playBtn.innerHTML = state.playing ? '&#9646;&#9646;' : '&#9654;';
+  saveState();
+}
+
+function toggleMute() {
+  state.muted = !state.muted;
+  audio.muted = state.muted;
+  els.muteBtn.innerHTML = state.muted ? '&#9834;<s>' : '&#9834;';
+  els.muteBtn.style.opacity = state.muted ? '0.5' : '';
+  saveState();
 }
 
 function next() {
@@ -210,10 +292,8 @@ function renderPlaylist() {
     item.addEventListener('click', () => {
       const idx = parseInt(item.dataset.idx);
       loadTrack(idx);
-      if (!state.playing) {
-        state.playing = true;
-        els.playBtn.innerHTML = '&#9646;&#9646;';
-      }
+      state.playing = true;
+      els.playBtn.innerHTML = '&#9646;&#9646;';
       audio.play().catch(() => {});
     });
   });
