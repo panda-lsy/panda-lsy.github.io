@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link id="favicon" rel="icon" type="image/png" href="/icon-black.png" />
+    <link id="favicon" rel="icon" type="image/png" href="/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>panda-lsy</title>
     <script>
@@ -11,8 +11,6 @@
         if (t) { try { t = JSON.parse(t); } catch(e) {} }
         if (!t) t = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', t);
-        var icon = document.getElementById('favicon');
-        if (icon) icon.href = t === 'dark' ? '/icon-white.png' : '/icon-black.png';
       })();
     </script>
   </head>

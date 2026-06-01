@@ -9,6 +9,7 @@ const NAV_ITEMS = [
 export function renderHeader(mount) {
   const header = document.createElement('header');
   header.className = 'site-header';
+  const theme = getTheme();
 
   const updateActive = () => {
     const path = getCurrentPath();
@@ -18,17 +19,20 @@ export function renderHeader(mount) {
     });
   };
 
-  const currentTheme = getTheme();
-  const icon = currentTheme === 'dark' ? '&#9788;' : '&#9790;';
+  const iconSrc = theme === 'dark' ? '/icon-white.png' : '/icon-black.png';
+  const themeIcon = theme === 'dark' ? '&#9788;' : '&#9790;';
 
   header.innerHTML = `
     <div class="site-header__inner">
-      <a href="#/" class="site-header__brand">panda-lsy</a>
+      <a href="#/" class="site-header__brand">
+        <img class="site-header__logo" src="${iconSrc}" alt="logo" />
+        <span class="site-header__name">panda-lsy</span>
+      </a>
       <nav class="site-header__nav">
         ${NAV_ITEMS.map(item =>
           `<a href="${item.hash}" class="site-header__link">${item.label}</a>`
         ).join('')}
-        <button class="site-header__theme-toggle" title="Toggle theme">${icon}</button>
+        <button class="site-header__theme-toggle" title="Toggle theme">${themeIcon}</button>
       </nav>
     </div>
   `;
@@ -39,6 +43,8 @@ export function renderHeader(mount) {
   header.querySelector('.site-header__theme-toggle').addEventListener('click', () => {
     const next = getTheme() === 'dark' ? 'light' : 'dark';
     applyTheme(next);
+    const logo = header.querySelector('.site-header__logo');
+    if (logo) logo.src = next === 'dark' ? '/icon-white.png' : '/icon-black.png';
     header.querySelector('.site-header__theme-toggle').innerHTML =
       next === 'dark' ? '&#9788;' : '&#9790;';
   });
@@ -55,6 +61,4 @@ function getTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   set('theme', theme);
-  const favicon = document.getElementById('favicon');
-  if (favicon) favicon.href = theme === 'dark' ? '/icon-white.png' : '/icon-black.png';
 }
