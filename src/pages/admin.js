@@ -2,6 +2,7 @@ import { get, set, remove } from '../utils/storage.js';
 import { verifyPat, fetchAllPosts, createPost, updatePost, closePost, reopenPost, fetchConfig, saveConfig } from '../api/github.js';
 import { showToast } from '../components/toast.js';
 import { createPostEditor } from '../components/post-editor.js';
+import { refreshMusicPlayer } from '../components/music-player.js';
 
 export async function renderAdmin(app) {
   const pat = get('gh_pat');
@@ -123,6 +124,7 @@ async function renderDashboard(app, user) {
     try {
       await saveConfig({ musicPlaylistId: playlistId });
       showToast('Settings saved');
+      await refreshMusicPlayer();
     } catch (err) {
       showToast('Failed to save: ' + err.message, 'error');
     }

@@ -27,6 +27,22 @@
 .site-header__nav {
   display: flex;
   gap: var(--space-6);
+  align-items: center;
+}
+
+.site-header__theme-toggle {
+  background: none;
+  border: none;
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+  padding: 0;
+  line-height: 1;
+}
+
+.site-header__theme-toggle:hover {
+  color: var(--color-text);
 }
 
 .site-header__link {

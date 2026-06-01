@@ -18,33 +18,33 @@ export async function initMusicPlayer(mount) {
 
   mount.appendChild(playerEl);
 
-  const toggleBtn = playerEl.querySelector('.music-player__toggle');
-  const closeBtn = playerEl.querySelector('.music-player__close');
+  playerEl.querySelector('.music-player__toggle').addEventListener('click', () => toggle());
+  playerEl.querySelector('.music-player__close').addEventListener('click', () => toggle(false));
 
-  toggleBtn.addEventListener('click', () => toggle());
-  closeBtn.addEventListener('click', () => toggle(false));
+  await loadPlaylist();
+}
 
+export async function refreshMusicPlayer() {
+  if (!playerEl) return;
+  await loadPlaylist();
+}
+
+async function loadPlaylist() {
   let playlistId = null;
 
   try {
     const config = await fetchConfig();
-    playlistId = config.musicPlaylistId;
-    if (playlistId) {
-      get('site_config_cache');
-    }
+    playlistId = config.musicPlaylistId || null;
+    if (playlistId) set('music_playlist_id', playlistId);
   } catch {
-    const cached = get('site_config_cache');
-    playlistId = cached?.musicPlaylistId;
+    playlistId = get('music_playlist_id');
   }
 
   if (playlistId) {
     playerEl.classList.remove('is-hidden');
     playerEl.dataset.playlistId = playlistId;
-  }
-
-  const savedState = get('music_player_expanded');
-  if (savedState && playlistId) {
-    toggle(true);
+  } else {
+    playerEl.classList.add('is-hidden');
   }
 }
 
@@ -53,7 +53,6 @@ function toggle(forceState) {
 
   expanded = forceState !== undefined ? forceState : !expanded;
   playerEl.classList.toggle('is-expanded', expanded);
-
   set('music_player_expanded', expanded);
 
   if (expanded && !iframeLoaded) {
