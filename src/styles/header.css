@@ -72,11 +72,18 @@
 
 @media (max-width: 768px) {
   .site-header__inner {
-    flex-direction: column;
-    gap: var(--space-2);
+    padding: var(--space-3) var(--container-padding);
+  }
+
+  .site-header__brand {
+    font-size: var(--font-size-base);
   }
 
   .site-header__nav {
     gap: var(--space-4);
+  }
+
+  .site-header__link {
+    font-size: var(--font-size-xs);
   }
 }

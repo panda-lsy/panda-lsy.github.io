@@ -79,3 +79,18 @@
 .post-detail__nav a:hover {
   color: var(--color-text);
 }
+
+@media (max-width: 768px) {
+  .post-detail__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .post-detail__meta {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .posts-list {
+    gap: var(--space-4);
+  }
+}

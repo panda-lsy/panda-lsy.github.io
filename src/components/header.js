@@ -55,4 +55,6 @@ function getTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   set('theme', theme);
+  const favicon = document.getElementById('favicon');
+  if (favicon) favicon.href = theme === 'dark' ? '/icon-white.png' : '/icon-black.png';
 }

@@ -29,7 +29,18 @@
 
 @media (max-width: 768px) {
   .page {
-    padding-top: var(--space-16);
+    padding-top: calc(var(--space-16) + 8px);
     padding-bottom: var(--space-16);
+  }
+
+  .container {
+    padding: 0 var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding-top: calc(var(--space-12) + 8px);
+    padding-bottom: var(--space-12);
   }
 }

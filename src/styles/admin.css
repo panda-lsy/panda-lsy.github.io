@@ -140,3 +140,39 @@
 .admin-topbar__title {
   font-size: var(--font-size-2xl);
 }
+
+@media (max-width: 768px) {
+  .admin-post-item {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .admin-post-item__title {
+    flex-basis: 100%;
+    white-space: normal;
+    margin-right: 0;
+  }
+
+  .admin-post-item__date {
+    margin-right: auto;
+  }
+
+  .admin-settings__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-editor {
+    padding: var(--space-4);
+  }
+
+  .admin-editor__textarea {
+    min-height: 200px;
+  }
+
+  .admin-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+}
