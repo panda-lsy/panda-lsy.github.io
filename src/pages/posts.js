@@ -2,6 +2,7 @@ import { fetchPosts } from '../api/github.js';
 import { createPostCard } from '../components/post-card.js';
 import { createPagination } from '../components/pagination.js';
 import { navigate } from '../router.js';
+import { initScrollAnimations } from '../modules/scroll-animations.js';
 
 export async function renderPosts(app, _, queryParams) {
   const page = parseInt(queryParams.get('page')) || 1;
@@ -41,6 +42,8 @@ export async function renderPosts(app, _, queryParams) {
         navigate(`/posts?page=${newPage}`);
       },
     }));
+
+    initScrollAnimations(app);
   } catch (err) {
     const msg = err.message || '';
     const hint = msg.includes('rate limit') || msg.includes('403')

@@ -1,6 +1,7 @@
 import { fetchPost } from '../api/github.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import { renderComments } from '../components/comments.js';
+import { initScrollAnimations } from '../modules/scroll-animations.js';
 
 export async function renderPostDetail(app, { id }) {
   app.innerHTML = `
@@ -53,6 +54,9 @@ export async function renderPostDetail(app, { id }) {
     // Load comments
     const commentsContainer = app.querySelector('#comments-container');
     await renderComments(commentsContainer, parseInt(id));
+
+    // Animate article elements
+    initScrollAnimations(app);
 
   } catch (err) {
     app.innerHTML = `

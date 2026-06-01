@@ -1,6 +1,7 @@
 import { fetchPosts } from '../api/github.js';
 import { createPostCard } from '../components/post-card.js';
-import { navigate } from '../router.js';
+import { initParticles, destroyParticles } from '../modules/particles.js';
+import { initScrollAnimations } from '../modules/scroll-animations.js';
 
 export async function renderHome(app) {
   app.innerHTML = `
@@ -23,6 +24,12 @@ export async function renderHome(app) {
     </div>
   `;
 
+  // Init particle background
+  initParticles(app);
+
+  // Animate hero immediately
+  initScrollAnimations(app);
+
   const listEl = app.querySelector('.home-recent__list');
 
   try {
@@ -37,6 +44,9 @@ export async function renderHome(app) {
     posts.forEach(post => {
       listEl.appendChild(createPostCard(post));
     });
+
+    // Animate cards after they're added
+    initScrollAnimations(app);
   } catch (err) {
     const msg = err.message || '';
     const hint = msg.includes('rate limit') || msg.includes('403')
@@ -49,4 +59,9 @@ export async function renderHome(app) {
     `;
     console.error('Home page error:', err);
   }
+
+  // Cleanup: destroy particles when navigating away
+  return () => {
+    destroyParticles();
+  };
 }

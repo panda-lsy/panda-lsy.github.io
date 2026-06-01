@@ -1,6 +1,7 @@
-const routes = [];
-
 let currentCleanup = null;
+import { killAllAnimations } from './modules/scroll-animations.js';
+
+const routes = [];
 
 export function addRoute(pattern, handler) {
   routes.push({ pattern, handler });
@@ -42,7 +43,18 @@ async function resolve() {
     currentCleanup = null;
   }
 
+  // Kill all GSAP animations before clearing DOM
+  killAllAnimations();
+
   const app = document.getElementById('app');
+
+  // Page transition: fade out current content
+  const currentContent = app.firstElementChild;
+  if (currentContent) {
+    currentContent.classList.add('page-enter');
+    await new Promise(r => setTimeout(r, 150));
+  }
+
   app.innerHTML = '';
 
   const cleanup = await matched.handler(app, matched.params, params);
@@ -50,11 +62,37 @@ async function resolve() {
     currentCleanup = cleanup;
   }
 
+  // Page transition: fade in new content
+  const newContent = app.firstElementChild;
+  if (newContent) {
+    newContent.classList.add('page-enter');
+    requestAnimationFrame(() => {
+      newContent.classList.add('page-enter-active');
+      newContent.classList.remove('page-enter');
+    });
+  }
+
+  // Header scroll shadow
+  updateHeaderShadow();
   window.scrollTo(0, 0);
 }
 
 export function getCurrentPath() {
   return parseHash().path;
+}
+
+let scrollBound = false;
+function updateHeaderShadow() {
+  if (scrollBound) return;
+  scrollBound = true;
+  const header = document.querySelector('.site-header');
+  if (!header) return;
+
+  const onScroll = () => {
+    header.classList.toggle('has-shadow', window.scrollY > 10);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 }
 
 export function initRouter() {
