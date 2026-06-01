@@ -30,7 +30,7 @@ async function request(path, { method = 'GET', body, auth = false } = {}) {
   const headers = { 'Accept': 'application/vnd.github.v3+json' };
   const pat = getPat();
 
-  if (auth && pat) {
+  if (pat) {
     headers['Authorization'] = `Bearer ${pat}`;
   }
 

@@ -3,7 +3,6 @@ import { getCurrentPath } from '../router.js';
 const NAV_ITEMS = [
   { label: 'Home', hash: '#/' },
   { label: 'Posts', hash: '#/posts' },
-  { label: 'Admin', hash: '#/admin' },
 ];
 
 export function renderHeader(mount) {
