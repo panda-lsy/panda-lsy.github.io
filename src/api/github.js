@@ -256,15 +256,7 @@ export async function fetchComments(issueNumber) {
   const data = await request(
     `/repos/${REPO_OWNER}/${REPO_NAME}/issues/${issueNumber}/comments?per_page=100`
   );
-  return data.map(c => ({
-    id: c.id,
-    body: c.body,
-    date: c.created_at,
-    user: {
-      login: c.user.login,
-      avatar_url: c.user.avatar_url,
-    },
-  }));
+  return data.map(normalizeComment);
 }
 
 export async function postComment(issueNumber, body) {
@@ -272,13 +264,39 @@ export async function postComment(issueNumber, body) {
     `/repos/${REPO_OWNER}/${REPO_NAME}/issues/${issueNumber}/comments`,
     { method: 'POST', body: { body }, auth: true }
   );
+  return normalizeComment(data);
+}
+
+export async function editComment(commentId, body) {
+  const data = await request(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/issues/comments/${commentId}`,
+    { method: 'PATCH', body: { body }, auth: true }
+  );
+  return normalizeComment(data);
+}
+
+export async function fetchCommentRaw(commentId) {
+  const data = await request(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/issues/comments/${commentId}`
+  );
+  return data.body || '';
+}
+
+export async function deleteComment(commentId) {
+  await request(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/issues/comments/${commentId}`,
+    { method: 'DELETE', auth: true }
+  );
+}
+
+function normalizeComment(c) {
   return {
-    id: data.id,
-    body: data.body,
-    date: data.created_at,
+    id: c.id,
+    body: c.body,
+    date: c.created_at,
     user: {
-      login: data.user.login,
-      avatar_url: data.user.avatar_url,
+      login: c.user.login,
+      avatar_url: c.user.avatar_url,
     },
   };
 }
