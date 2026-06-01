@@ -38,9 +38,13 @@ export async function renderHome(app) {
       listEl.appendChild(createPostCard(post));
     });
   } catch (err) {
+    const msg = err.message || '';
+    const hint = msg.includes('rate limit') || msg.includes('403')
+      ? 'GitHub API rate limit exceeded. <a href="#/login">Login</a> to increase the limit.'
+      : 'Could not load posts. Please try again later.';
     listEl.innerHTML = `
       <div class="error-state">
-        <p class="error-state__message">Failed to load posts.</p>
+        <p class="error-state__message">${hint}</p>
       </div>
     `;
     console.error('Home page error:', err);

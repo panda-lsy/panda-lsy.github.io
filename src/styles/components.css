@@ -211,6 +211,12 @@
 
 .error-state__message {
   margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.error-state__message a {
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 @media (max-width: 768px) {
