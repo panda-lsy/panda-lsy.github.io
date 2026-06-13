@@ -14,6 +14,7 @@ import './styles/user.css';
 import './styles/comments.css';
 import './styles/animations.css';
 import './styles/timeline.css';
+import './styles/pages.css';
 
 import { addRoute, initRouter } from './router.js';
 import { renderHeader } from './components/header.js';
@@ -26,12 +27,16 @@ import { renderAuthCallback } from './pages/auth-callback.js';
 import { renderLogin } from './pages/login.js';
 import { renderUser } from './pages/user.js';
 import { renderTimeline } from './pages/timeline.js';
+import { renderAbout } from './pages/about.js';
+import { renderProjects } from './pages/projects.js';
 import { initMusicPlayer } from './components/music-player.js';
 
 addRoute(/^\/$/, renderHome);
 addRoute(/^\/posts$/, renderPosts);
 addRoute(/^\/posts\/(?<id>\d+)$/, renderPostDetail);
 addRoute(/^\/timeline$/, renderTimeline);
+addRoute(/^\/about$/, renderAbout);
+addRoute(/^\/projects$/, renderProjects);
 addRoute(/^\/admin$/, renderAdmin);
 addRoute(/^\/auth\/callback$/, renderAuthCallback);
 addRoute(/^\/login$/, renderLogin);

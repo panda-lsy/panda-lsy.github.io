@@ -111,6 +111,12 @@ async function renderDashboard(app, user) {
             </div>
             <div class="admin-settings__row">
               <div style="flex:1">
+                <label class="admin-editor__label">About Page Content (Markdown)</label>
+                <textarea class="admin-editor__textarea" id="cfg-aboutContent" style="min-height:200px" placeholder="Write your about page in Markdown..."></textarea>
+              </div>
+            </div>
+            <div class="admin-settings__row">
+              <div style="flex:1">
                 <label class="admin-editor__label">NetEase Cloud Music Playlist ID</label>
                 <input type="text" class="input" id="cfg-musicPlaylistId" placeholder="e.g. 123456789" />
               </div>
@@ -139,7 +145,7 @@ async function renderDashboard(app, user) {
 
   app.querySelector('#save-config-btn').addEventListener('click', async () => {
     const updates = {};
-    ['siteName', 'heroTitle', 'heroTagline', 'recentTitle', 'footerText', 'musicPlaylistId'].forEach(key => {
+    ['siteName', 'heroTitle', 'heroTagline', 'recentTitle', 'footerText', 'aboutContent', 'musicPlaylistId'].forEach(key => {
       const input = app.querySelector(`#cfg-${key}`);
       if (input) updates[key] = input.value.trim();
     });

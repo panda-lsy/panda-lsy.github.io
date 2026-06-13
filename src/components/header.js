@@ -7,6 +7,8 @@ const NAV_ITEMS = [
   { label: 'Home', hash: '#/' },
   { label: 'Timeline', hash: '#/timeline' },
   { label: 'Posts', hash: '#/posts' },
+  { label: 'Projects', hash: '#/projects' },
+  { label: 'About', hash: '#/about' },
 ];
 
 let headerEl = null;

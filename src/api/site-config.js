@@ -13,6 +13,7 @@ const DEFAULTS = {
     { name: '阈启科技', url: 'http://limnov.com/' }
   ]),
   footerText: 'Built with simplicity.',
+  aboutContent: '',
   musicPlaylistId: '',
 };
 
