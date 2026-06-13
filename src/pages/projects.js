@@ -7,6 +7,7 @@ const PROJECTS = [
     desc: '让大模型「能画化学」，更让用户「能改化学」。基于 Dart 开发的化学结构可视化与 AI 绘图工具。',
     lang: 'Dart',
     url: 'https://github.com/panda-lsy/ChemVision',
+    demo: 'https://chemvision.qzz.io/',
     tags: ['AI', 'Chemistry', 'Dart'],
   },
   {
@@ -14,6 +15,7 @@ const PROJECTS = [
     desc: '一站式星露谷物语启动器，集成 Mod 管理器和 Modpack 工具，让游戏模组管理变得简单。',
     lang: 'C#',
     url: 'https://github.com/panda-lsy/SVL-StardewValleyLauncher',
+    demo: 'https://svl.qzz.io/',
     tags: ['Game', 'C#', 'Mod Manager'],
     stars: 9,
   },
@@ -22,6 +24,7 @@ const PROJECTS = [
     desc: '面向 AI 训练数据安全与版权保护的微服务系统，包含认证、版权管理、特征提取、对抗扰动和侵权检测。支持 Web / Windows / Android 多端。',
     lang: 'Docker + React + Python',
     url: null,
+    demo: 'https://chainguard.qzz.io/',
     tags: ['AI Safety', 'Copyright', 'Microservices'],
   },
 ];
@@ -29,9 +32,12 @@ const PROJECTS = [
 export function renderProjects(app) {
   const cardsHtml = PROJECTS.map((p, i) => {
     const tagsHtml = p.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('');
-    const linkHtml = p.url
-      ? `<a class="project-card__link" href="${p.url}" target="_blank" rel="noopener noreferrer">View on GitHub &rarr;</a>`
+    const ghLink = p.url
+      ? `<a class="project-card__link" href="${p.url}" target="_blank" rel="noopener noreferrer">GitHub &rarr;</a>`
       : `<span class="project-card__link project-card__link--local">Local Project</span>`;
+    const demoLink = p.demo
+      ? `<a class="project-card__link project-card__link--demo" href="${p.demo}" target="_blank" rel="noopener noreferrer">View Demo &rarr;</a>`
+      : '';
     const starsHtml = p.stars ? `<span class="project-card__stars">&#9733; ${p.stars}</span>` : '';
 
     return `
@@ -45,7 +51,10 @@ export function renderProjects(app) {
           <span class="project-card__lang">${escHtml(p.lang)}</span>
           ${tagsHtml}
         </div>
-        ${linkHtml}
+        <div class="project-card__links">
+          ${ghLink}
+          ${demoLink}
+        </div>
       </article>
     `;
   }).join('');
