@@ -278,7 +278,7 @@ export async function uploadImage(file) {
     auth: true,
   });
 
-  return `/${path.replace('public/', '')}`;
+  return `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${path}`;
 }
 
 // Comments API (uses the post's issue number directly)
