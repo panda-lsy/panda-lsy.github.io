@@ -1,6 +1,7 @@
 import { showToast } from './toast.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import { get, set, remove } from '../utils/storage.js';
+import { uploadImage } from '../api/github.js';
 import { extractExcerpt, stripExcerpt, injectExcerpt } from '../utils/excerpt.js';
 
 const AUTOSAVE_KEY = 'post_editor_draft';
@@ -18,6 +19,7 @@ const TOOLBAR_ITEMS = [
   { label: '&lt;/&gt;', title: 'Code', action: 'code' },
   { label: '[ ]', title: 'Link', action: 'link' },
   { label: '[ ! ]', title: 'Image', action: 'image' },
+  { label: '↑', title: 'Upload Image', action: 'upload-image' },
 ];
 
 export function createPostEditor({ post, onSave, onCancel }) {
@@ -68,6 +70,8 @@ export function createPostEditor({ post, onSave, onCancel }) {
     </div>
 
     <div class="editor-full__body">
+    <input type="file" id="editor-image-input" accept="image/*" style="display:none" />
+
       <div class="editor-full__pane editor-full__pane--edit">
         <textarea class="editor-full__textarea" id="editor-body" placeholder="Write your post in Markdown...">${escapeText(initBody)}</textarea>
       </div>
@@ -83,6 +87,56 @@ export function createPostEditor({ post, onSave, onCancel }) {
   const excerptInput = el.querySelector('#editor-excerpt');
   const previewEl = el.querySelector('#editor-preview');
   const statusEl = el.querySelector('#editor-status');
+  // Image upload
+  const imageInput = el.querySelector('#editor-image-input');
+
+  async function handleImageUpload(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    showToast('Uploading image...', 'info');
+    try {
+      const url = await uploadImage(file);
+      const name = file.name.replace(/\.[^.]+$/, '');
+      const md = `![${name}](${url})`;
+      const start = bodyInput.selectionStart;
+      bodyInput.setRangeText(md, start, bodyInput.selectionEnd, 'end');
+      bodyInput.focus();
+      updatePreview();
+      scheduleAutosave();
+      showToast('Image uploaded!');
+    } catch (err) {
+      showToast('Upload failed: ' + err.message, 'error');
+    }
+  }
+
+  imageInput.addEventListener('change', () => {
+    const file = imageInput.files[0];
+    if (file) handleImageUpload(file);
+    imageInput.value = '';
+  });
+
+  bodyInput.addEventListener('paste', (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        handleImageUpload(item.getAsFile());
+        return;
+      }
+    }
+  });
+
+  bodyInput.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  bodyInput.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleImageUpload(file);
+  });
 
   // Live preview
   const updatePreview = () => {
@@ -173,6 +227,10 @@ export function createPostEditor({ post, onSave, onCancel }) {
   el.querySelector('.editor-full__toolbar').addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
+    if (btn.dataset.action === 'upload-image') {
+      imageInput.click();
+      return;
+    }
     applyWithHistory(bodyInput, btn.dataset.action);
   });
 

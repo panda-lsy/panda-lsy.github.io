@@ -254,6 +254,33 @@ function invalidatePostCache() {
   }
 }
 
+/**
+ * Upload an image file to the GitHub repository.
+ * Returns the public URL path to the uploaded image.
+ */
+export async function uploadImage(file) {
+  const ts = Date.now();
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+  const path = `public/uploads/${ts}-${safeName}`;
+
+  // Read file as base64
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const content = btoa(binary);
+
+  await request(`/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
+    method: 'PUT',
+    body: { message: `Upload image: ${safeName}`, content },
+    auth: true,
+  });
+
+  return `/${path.replace('public/', '')}`;
+}
+
 // Comments API (uses the post's issue number directly)
 export async function fetchComments(issueNumber) {
   const data = await request(
